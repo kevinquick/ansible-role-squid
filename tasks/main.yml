@@ -1,0 +1,32 @@
+---
+- name: 'Install squid'
+  yum:
+    name: 'squid'
+    state: 'present'
+    update_cache: true
+
+- name: 'Ensure /etc/squid/conf.d folder exists'
+  file:
+    path: '/etc/squid/conf.d/'
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+    state: 'directory'
+
+- name: 'Create default include configs'
+  file:
+    path: '/etc/squid/conf.d/default.conf'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+    state: file
+
+- name: 'Update squid config/acls'
+  template:
+    src: 'squid.conf.j2'
+    dest: '/etc/squid/squid.conf'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+  notify: restart squid
+  when: config_name == 'squid.conf'
