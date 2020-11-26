@@ -1,0 +1,29 @@
+{% if custom_ssl_ports is defined %}
+{% for port in custom_ssl_ports %}
+acl SSL_ports port {{ port }}
+{% endfor %}
+{% endif %}
+
+{% if custom_safe_ports is defined %}
+{% for port in custom_safe_ports %}
+acl Safe_ports port {{ port }}
+{% endfor %}
+{% endif %}
+
+{% if custom_access_control is defined %}
+{% for acl in custom_access_control_list %}
+acl {{ acl.name }} {{ acl.type }} {{ acl.arg }}
+{% endfor %}
+{% endif %}
+
+{% if custom_http_access is defined %}
+{% for http_access in custom_http_access %}
+http_access {{ http_access.perm }} {{ http_access.aclname }}
+{% endfor %}
+{% endif %}
+
+{% if custom_refresh_patterns is defined%}
+{% for rp in custom_refresh_patterns %}
+refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min }} {{ rp.percent }} {{ rp.max }} {{ rp.opts }}
+{% endfor %}
+{% endif %}
