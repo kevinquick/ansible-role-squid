@@ -2,33 +2,33 @@ http_port {{ squid_port }}
 
 include /etc/squid/conf.d/*.conf
 
-{% for network in local_networks %}
+{% for network in squid_local_networks %}
 acl localnet src {{ network }}
 {% endfor %}
 
-{% for port in ssl_ports %}
+{% for port in squid_ssl_ports %}
 acl SSL_ports port {{ port }}
 {% endfor %}
 
-{% for port in safe_ports %}
+{% for port in squid_safe_ports %}
 acl Safe_ports port {{ port }}
 {% endfor %}
 acl CONNECT method CONNECT
 
-{% for acl in access_control_list %}
+{% for acl in squid_access_control_list %}
 acl {{ acl.name }} {{ acl.type }} {{ acl.arg }}
 {% endfor %}
 
-{% for http_access in http_access %}
+{% for http_access in squid_http_access %}
 http_access {{ http_access.perm }} {{ http_access.aclname }}
 {% endfor %}
 
-{% for rp in refresh_patterns %}
+{% for rp in squid_refresh_patterns %}
 refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min }} {{ rp.percent }} {{ rp.max }} {{ rp.opts }}
 {% endfor %}
 
-cache_dir {{ diskcache }}
+cache_dir {{ squid_diskcache }}
 
-coredump_dir {{ coredumpdir }}
+coredump_dir {{ squid_coredumpdir }}
 
 http_access deny all

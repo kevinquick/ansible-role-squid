@@ -1,23 +1,23 @@
 ---
-config_name: 'squid.conf'
+config_name: 'squid'
 
 squid_port: 3128
 
-local_networks:
+squid_local_networks:
 - '192.168.0.0/16'
 - '172.16.0.0/12'
 - '10.0.0.0/8'
 - 'fc00::/7'
 - 'fe80::/10'
 
-ssl_ports:
+squid_ssl_ports:
 - 443
 
-safe_ports:
+squid_safe_ports:
 - 80
 - 443
 
-http_access:
+squid_http_access:
 - perm: 'allow'
   aclname: 'localhost'
 - perm: 'deny'
@@ -25,9 +25,9 @@ http_access:
 - perm: 'deny'
   aclname: 'CONNECT !SSL_ports'
 
-access_control_list: []
+squid_access_control_list: []
 
-refresh_patterns:
+squid_refresh_patterns:
 - case_sensitive: false
   regex: '^ftp:'
   min: 1440
@@ -53,6 +53,6 @@ refresh_patterns:
   max: 4320
   opts: ''
 
-diskcache: 'ufs /var/spool/squid 100 16 256'
-coredumpdir: '/var/spool/squid'
+squid_diskcache: 'ufs /var/spool/squid 100 16 256'
+squid_coredumpdir: '/var/spool/squid'
 
