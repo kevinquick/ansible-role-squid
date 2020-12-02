@@ -29,6 +29,15 @@
     patterns: '*.conf'
   register: find
 
+- name: 'Ensure there is at least 1 sub-module present'
+  file:
+    path: '/etc/squid/conf.d/default.conf'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+    state: 'touch'
+  when: find.matches == 0
+
 - name: 'Update squid config/acls'
   template:
     src: 'squid.conf.j2'
