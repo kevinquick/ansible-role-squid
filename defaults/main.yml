@@ -1,5 +1,5 @@
 ---
-config_name: 'squid'
+squid_config_name: 'squid'
 
 squid_port: 3128
 

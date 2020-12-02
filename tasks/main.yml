@@ -21,7 +21,7 @@
     group: 'root'
     mode: 0644
   notify: restart squid
-  when: config_name != 'squid'
+  when: squid_config_name != 'squid'
 
 - name: 'Check if squid sub-modules are present'
   find:
@@ -36,7 +36,7 @@
     group: 'root'
     mode: 0644
     state: 'touch'
-  when: find.matches == 0
+  when: find.matched == 0
 
 - name: 'Update squid config/acls'
   template:
@@ -46,4 +46,4 @@
     group: 'root'
     mode: 0644
   notify: restart squid
-  when: config_name == 'squid'
+  when: squid_config_name == 'squid'
