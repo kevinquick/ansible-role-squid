@@ -11,13 +11,27 @@
     permanent: true
     state: 'enabled'
 
-- name: 'Ensure /etc/squid/conf.d folder exists'
+- name: 'Ensure that /etc/squid/conf.d folder exists'
   file:
     path: '/etc/squid/conf.d/'
     owner: 'root'
     group: 'root'
     mode: 0755
     state: 'directory'
+
+- name: 'Checking if /etc/squid/allowed_ips.txt exists'
+  stat:
+    path: '/etc/squid/allowed_ips.txt'
+  register: ipfile
+
+- name: 'Ensure that /etc/squid/allowed_ips.txt exists'
+  file:
+    path: '/etc/squid/allowed_ips.txt'
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+    state: 'touch'
+  when: not ipfile.exists
 
 - name: "Update custom squid configuration for {{ config_name }}"
   template:
