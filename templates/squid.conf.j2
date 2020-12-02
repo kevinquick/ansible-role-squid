@@ -2,10 +2,8 @@ http_port {{ squid_port }}
 
 include /etc/squid/conf.d/*.conf
 
-acl allowed_ips src "/etc/squid/allowed_ips.txt"
-
 {% for network in squid_local_networks %}
-acl localnet src {{ network }}
+acl {{ network.acl }} src {{ network.ip }}
 {% endfor %}
 
 {% for port in squid_ssl_ports %}

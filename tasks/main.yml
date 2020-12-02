@@ -19,29 +19,16 @@
     mode: 0755
     state: 'directory'
 
-- name: 'Checking if /etc/squid/allowed_ips.txt exists'
-  stat:
-    path: '/etc/squid/allowed_ips.txt'
-  register: ipfile
-
-- name: 'Ensure that /etc/squid/allowed_ips.txt exists'
-  file:
-    path: '/etc/squid/allowed_ips.txt'
-    owner: 'root'
-    group: 'root'
-    mode: 0755
-    state: 'touch'
-  when: not ipfile.exists
-
-- name: "Update custom squid configuration for {{ config_name }}"
+- name: "Update custom squid configurations"
   template:
     src: 'template.conf.j2'
-    dest: '/etc/squid/conf.d/{{ config_name }}.conf'
+    dest: '/etc/squid/conf.d/{{ item.name }}.conf'
     owner: 'root'
     group: 'root'
     mode: 0644
   notify: restart squid
-  when: squid_config_name != 'squid'
+  loop: "{{ squid_custom_config }}"
+  when: squid_custom_config is defined
 
 - name: 'Check if squid sub-modules are present'
   find:
@@ -66,4 +53,3 @@
     group: 'root'
     mode: 0644
   notify: restart squid
-  when: squid_config_name == 'squid'
