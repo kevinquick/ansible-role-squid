@@ -20,6 +20,7 @@
     group: 'root'
     mode: 0644
     state: file
+    force: yes
 
 - name: 'Update squid config/acls'
   template:
