@@ -13,6 +13,16 @@
     mode: 0755
     state: 'directory'
 
+- name: "Update custom squid configuration for {{ config_name }}"
+  template:
+    src: 'template.conf.j2'
+    dest: '/etc/squid/conf.d/{{ config_name }}.conf'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+  notify: restart squid
+  when: config_name != 'squid'
+
 - name: 'Check if squid sub-modules are present'
   find:
     paths: '/etc/squid/conf.d/'
@@ -28,13 +38,3 @@
     mode: 0644
   notify: restart squid
   when: config_name == 'squid'
-
-- name: "Update custom squid configuration for {{ config_name }}"
-  template:
-    src: 'template.conf.j2'
-    dest: '/etc/squid/conf.d/{{ config_name }}.conf'
-    owner: 'root'
-    group: 'root'
-    mode: 0644
-  notify: restart squid
-  when: config_name != 'squid'
