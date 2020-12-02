@@ -27,8 +27,6 @@
     group: 'root'
     mode: 0644
   notify: restart squid
-  vars:
-    squid_custom_config: "{{ item }}"
   loop: "{{ squid_custom_config }}"
   when: squid_custom_config is defined
 
