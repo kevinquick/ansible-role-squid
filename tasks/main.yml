@@ -5,6 +5,12 @@
     state: 'present'
     update_cache: true
 
+- name: 'Open firewall port for squid'
+  ansible.posix.firewalld:
+    port: '3128/tcp'
+    permanent: true
+    state: 'enabled'
+
 - name: 'Ensure /etc/squid/conf.d folder exists'
   file:
     path: '/etc/squid/conf.d/'
