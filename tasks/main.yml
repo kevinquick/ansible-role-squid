@@ -13,14 +13,11 @@
     mode: 0755
     state: 'directory'
 
-- name: 'Create default include configs'
-  file:
-    path: '/etc/squid/conf.d/default.conf'
-    owner: 'root'
-    group: 'root'
-    mode: 0644
-    state: file
-    force: yes
+- name: 'Check if squid sub-modules are present'
+  find:
+    paths: '/etc/squid/conf.d/'
+    patterns: '*.conf'
+  register: find
 
 - name: 'Update squid config/acls'
   template:

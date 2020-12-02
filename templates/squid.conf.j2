@@ -1,6 +1,8 @@
 http_port {{ squid_port }}
 
+{% if find.matched > 0 %}
 include /etc/squid/conf.d/*.conf
+{% endif %}}
 
 {% for network in squid_local_networks %}
 acl localnet src {{ network }}
