@@ -9,6 +9,7 @@
   ansible.posix.firewalld:
     port: '3128/tcp'
     permanent: true
+    immediate: true
     state: 'enabled'
 
 - name: 'Ensure that /etc/squid/conf.d folder exists'
