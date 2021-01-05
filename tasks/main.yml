@@ -7,7 +7,7 @@
 
 - name: 'Open firewall port for squid'
   ansible.posix.firewalld:
-    port: '3128/tcp'
+    port: "{{ squid_port }}/tcp"
     permanent: true
     immediate: true
     state: 'enabled'
