@@ -17,13 +17,7 @@ squid_safe_ports:
 - 80
 - 443
 
-squid_http_access:
-- perm: 'allow'
-  aclname: 'localhost'
-- perm: 'deny'
-  aclname: '!Safe_ports'
-- perm: 'deny'
-  aclname: 'CONNECT !SSL_ports'
+squid_http_access: []
 
 squid_access_control_list: []
 

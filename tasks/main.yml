@@ -47,7 +47,7 @@
 - name: 'Update custom squid configurations'
   template:
     src: 'template.conf.j2'
-    dest: '/etc/squid/conf.d/{{ item['name'] }}.conf'
+    dest: "/etc/squid/conf.d/{{ item['name'] }}.conf"
     owner: 'root'
     group: 'root'
     mode: 0644
