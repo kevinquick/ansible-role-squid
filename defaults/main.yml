@@ -1,7 +1,14 @@
 ---
 squid_port: 3128
 
-squid_local_networks: []
+squid_allowed_domains: []
+
+squid_blocked_domains: []
+
+squid_allowed_hosts: []
+
+squid_blocked_hosts: []
+
 
 squid_ssl_ports:
 - 443
@@ -48,7 +55,6 @@ squid_refresh_patterns:
 
 squid_diskcache: 'ufs /var/spool/squid 100 16 256'
 squid_coredumpdir: '/var/spool/squid'
-
 
 # For use with custom configurations only
 squid_custom_config: []

@@ -1,3 +1,4 @@
+# {{ ansible_managed }}
 {% if item.networks is defined %}
 {% for network in item.networks %}
 acl {{ network.acl }} src {{ network.ip }}

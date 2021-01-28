@@ -1,10 +1,12 @@
+# {{ ansible_managed }}
 http_port {{ squid_port }}
 
 include /etc/squid/conf.d/*.conf
+acl allowlist dstdomain "/etc/squid/allowlist.acl"
+acl blocklist dstdomain "/etc/squid/blocklist.acl"
 
-{% for network in squid_local_networks %}
-acl {{ network.acl }} src {{ network.ip }}
-{% endfor %}
+acl allowed_hosts src "/etc/squid/allowed_hosts.acl"
+acl blocked_hosts src "/etc/squid/blocked_hosts.acl"
 
 {% for port in squid_ssl_ports %}
 acl SSL_ports port {{ port }}
@@ -22,6 +24,10 @@ acl {{ acl.name }} {{ acl.type }} "{{ acl.arg }}"
 {% for http_access in squid_http_access %}
 http_access {{ http_access.perm }} {{ http_access.aclname }}
 {% endfor %}
+http_access allow allowlist
+http_access deny blocklist
+http_access allow allowed_hosts
+http_access deny blocked_hosts
 
 {% for rp in squid_refresh_patterns %}
 refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min }} {{ rp.percent }} {{ rp.max }} {{ rp.opts }}

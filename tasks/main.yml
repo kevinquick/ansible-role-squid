@@ -1,7 +1,11 @@
 ---
+- name: 'Include OS specific vars'
+  include_vars: "{{ ansible_facts['os_family'] }}.yml"
+  no_log: true
+
 - name: 'Install squid'
-  yum:
-    name: 'squid'
+  package:
+    name: "{{ squid_pkg }}"
     state: 'present'
     update_cache: true
 
@@ -11,6 +15,7 @@
     permanent: true
     immediate: true
     state: 'enabled'
+  when: ansible_facts['os_family'] == 'RedHat'
 
 - name: 'Ensure that /etc/squid/conf.d folder exists'
   file:
@@ -20,10 +25,29 @@
     mode: 0755
     state: 'directory'
 
-- name: "Update custom squid configurations"
+- name: 'Ensure allow and blocklists'
+  copy:
+    dest: "/etc/squid/{{ item['name'] }}.acl"
+    content: |
+      # Managed by Ansible, your changes will be lost!
+      {% for line in item['content'] %}
+      {{ line }}
+      {% endfor %}
+    mode: 0444
+  loop:
+    - name: 'allowlist'
+      content: "{{ squid_allowed_domains }}"
+    - name: 'blocklist'
+      content: "{{ squid_blocked_domains }}"
+    - name: 'allowed_hosts'
+      content: "{{ squid_allowed_hosts }}"
+    - name: 'blocked_hosts'
+      content: "{{ squid_blocked_hosts }}"
+
+- name: 'Update custom squid configurations'
   template:
     src: 'template.conf.j2'
-    dest: '/etc/squid/conf.d/{{ item.name }}.conf'
+    dest: '/etc/squid/conf.d/{{ item['name'] }}.conf'
     owner: 'root'
     group: 'root'
     mode: 0644
