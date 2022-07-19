@@ -18,6 +18,11 @@ acl Safe_ports port {{ port }}
 {% endfor %}
 acl CONNECT method CONNECT
 
+{% if squid_upstream_proxy %}
+cache_peer {{ squid_cache_peer_host }} parent {{ squid_cache_peer_port }} 0 no-query default
+never_direct allow all
+{% endif %}
+
 {% for acl in squid_access_control_list %}
 acl {{ acl.name }} {{ acl.type }} "{{ acl.arg }}"
 {% endfor %}

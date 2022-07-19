@@ -17,6 +17,11 @@ squid_safe_ports:
   - 80
   - 443
 
+# Configure upstream proxy, if any
+squid_upstream_proxy: false
+squid_cache_peer_host: ''
+squid_cache_peer_port: ''
+
 # Extra, custom, ACLs
 squid_access_control_list: []
 # squid_access_control_list:
