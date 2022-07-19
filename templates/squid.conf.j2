@@ -22,7 +22,6 @@ acl CONNECT method CONNECT
 acl {{ acl.name }} {{ acl.type }} "{{ acl.arg }}"
 {% endfor %}
 
-
 {% for http_access in squid_http_access %}
 http_access {{ http_access.perm }} {{ http_access.aclname }}
 {% endfor %}
@@ -41,7 +40,7 @@ refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min
 {% endfor %}
 
 cache_dir {{ squid_diskcache }}
-
 coredump_dir {{ squid_coredumpdir }}
 
+# Deny anything not already allowed
 http_access deny all
