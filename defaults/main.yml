@@ -2,9 +2,10 @@
 # Port that Squid listens on
 squid_port: 3128
 
-# Default ACLs
+# ACLs for allowing or blocking destination domains
 squid_allowed_domains: []
 squid_blocked_domains: []
+# ACLs for allowing or blocking hosts from having full Internet access
 squid_allowed_hosts: []
 squid_blocked_hosts: []
 

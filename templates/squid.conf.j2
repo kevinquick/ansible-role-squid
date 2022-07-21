@@ -3,9 +3,11 @@ http_port {{ squid_port }}
 
 include /etc/squid/conf.d/*.conf
 
+# Domains that are allowed or blocked
 acl allowlist dstdomain "/etc/squid/allowlist.acl"
 acl blocklist dstdomain "/etc/squid/blocklist.acl"
 
+# Hosts that are granted full access, or none at all
 acl allowed_hosts src "/etc/squid/allowed_hosts.acl"
 acl blocked_hosts src "/etc/squid/blocked_hosts.acl"
 
