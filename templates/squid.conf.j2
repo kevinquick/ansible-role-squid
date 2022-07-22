@@ -3,9 +3,11 @@ http_port {{ squid_port }}
 
 include /etc/squid/conf.d/*.conf
 
+# Domains that are allowed or blocked
 acl allowlist dstdomain "/etc/squid/allowlist.acl"
 acl blocklist dstdomain "/etc/squid/blocklist.acl"
 
+# Hosts that are granted full access, or none at all
 acl allowed_hosts src "/etc/squid/allowed_hosts.acl"
 acl blocked_hosts src "/etc/squid/blocked_hosts.acl"
 
@@ -18,10 +20,14 @@ acl Safe_ports port {{ port }}
 {% endfor %}
 acl CONNECT method CONNECT
 
+{% if squid_upstream_proxy %}
+cache_peer {{ squid_cache_peer_host }} parent {{ squid_cache_peer_port }} 0 no-query default
+never_direct allow all
+{% endif %}
+
 {% for acl in squid_access_control_list %}
 acl {{ acl.name }} {{ acl.type }} "{{ acl.arg }}"
 {% endfor %}
-
 
 {% for http_access in squid_http_access %}
 http_access {{ http_access.perm }} {{ http_access.aclname }}
@@ -41,7 +47,7 @@ refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min
 {% endfor %}
 
 cache_dir {{ squid_diskcache }}
-
 coredump_dir {{ squid_coredumpdir }}
 
+# Deny anything not already allowed
 http_access deny all

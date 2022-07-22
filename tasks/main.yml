@@ -1,15 +1,15 @@
 ---
 - name: 'Include OS specific vars'
-  include_vars: "{{ ansible_facts['os_family'] }}.yml"
+  ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
   no_log: true
 
-- name: 'Install squid'
-  package:
+- name: 'Install packages'
+  ansible.builtin.package:
     name: "{{ squid_pkg }}"
     state: 'present'
     update_cache: true
 
-- name: 'Open firewall port for squid'
+- name: 'Ensure firewall ports'
   ansible.posix.firewalld:
     port: "{{ squid_port }}/tcp"
     permanent: true
@@ -18,15 +18,15 @@
   when: ansible_facts['os_family'] == 'RedHat'
 
 - name: 'Ensure that /etc/squid/conf.d folder exists'
-  file:
+  ansible.builtin.file:
     path: '/etc/squid/conf.d/'
     owner: 'root'
     group: 'root'
     mode: 0755
     state: 'directory'
 
-- name: 'Ensure allow and blocklists'
-  copy:
+- name: 'Ensure allow- and blocklists'
+  ansible.builtin.copy:
     dest: "/etc/squid/{{ item['name'] }}.acl"
     content: |
       # Managed by Ansible, your changes will be lost!
@@ -44,43 +44,43 @@
     - name: 'blocked_hosts'
       content: "{{ squid_blocked_hosts }}"
 
-- name: 'Update custom squid configurations'
-  template:
+- name: 'Ensure custom Squid configurations'
+  ansible.builtin.template:
     src: 'template.conf.j2'
     dest: "/etc/squid/conf.d/{{ item['name'] }}.conf"
     owner: 'root'
     group: 'root'
     mode: 0644
-  notify: restart squid
+  notify: 'restart squid'
   loop: "{{ squid_custom_config }}"
   when: squid_custom_config is defined
 
-- name: 'Check if squid sub-modules are present'
-  find:
+- name: 'Check if Squid sub-modules are present'
+  ansible.builtin.find:
     paths: '/etc/squid/conf.d/'
     patterns: '*.conf'
-  register: find
+  register: 'find_result'
 
 - name: 'Ensure there is at least 1 sub-module present'
-  file:
+  ansible.builtin.file:
     path: '/etc/squid/conf.d/default.conf'
     owner: 'root'
     group: 'root'
     mode: 0644
     state: 'touch'
-  when: find.matched == 0
+  when: find_result['matched'] == 0
 
-- name: 'Update squid config/acls'
-  template:
+- name: 'Ensure Squid config'
+  ansible.builtin.template:
     src: 'squid.conf.j2'
     dest: '/etc/squid/squid.conf'
     owner: 'root'
     group: 'root'
     mode: 0644
-  notify: restart squid
+  notify: 'restart squid'
 
-- name: 'Start squid service if not started, and enable it'
-  service:
+- name: 'Ensure service'
+  ansible.builtin.service:
     name: 'squid'
     state: 'started'
     enabled: true
