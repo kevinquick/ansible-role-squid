@@ -34,6 +34,7 @@
       {{ line }}
       {% endfor %}
     mode: 0444
+    notify: 'restart squid'
   loop:
     - name: 'allowlist'
       content: "{{ squid_allowed_domains }}"
