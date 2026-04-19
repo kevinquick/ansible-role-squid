@@ -1,0 +1,64 @@
+---
+- name: 'Ensure /etc/squid/conf.d exists'
+  ansible.builtin.file:
+    path: '/etc/squid/conf.d/'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+    state: 'directory'
+
+- name: 'Ensure allow- and blocklists'
+  ansible.builtin.copy:
+    dest: "/etc/squid/{{ item['name'] }}.acl"
+    content: |
+      # Managed by Ansible, your changes will be lost!
+      {% for line in item['content'] %}
+      {{ line }}
+      {% endfor %}
+    mode: '0444'
+  notify: 'Restart squid'
+  loop:
+    - name: 'allowlist'
+      content: "{{ squid_allowed_domains }}"
+    - name: 'blocklist'
+      content: "{{ squid_blocked_domains }}"
+    - name: 'allowed_hosts'
+      content: "{{ squid_allowed_hosts }}"
+    - name: 'blocked_hosts'
+      content: "{{ squid_blocked_hosts }}"
+
+- name: 'Ensure custom Squid configurations'
+  ansible.builtin.template:
+    src: 'template.conf.j2'
+    dest: "/etc/squid/conf.d/{{ item['name'] }}.conf"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  notify: 'Restart squid'
+  loop: "{{ squid_custom_config }}"
+  when: squid_custom_config | length > 0
+
+- name: 'Check if Squid sub-modules are present'
+  ansible.builtin.find:
+    paths: '/etc/squid/conf.d/'
+    patterns: '*.conf'
+  register: 'squid_find_result'
+
+- name: 'Ensure there is at least 1 sub-module present'
+  ansible.builtin.file:
+    path: '/etc/squid/conf.d/default.conf'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+    state: 'touch'
+  when: squid_find_result['matched'] == 0
+  changed_when: false
+
+- name: 'Ensure Squid config'
+  ansible.builtin.template:
+    src: 'squid.conf.j2'
+    dest: '/etc/squid/squid.conf'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  notify: 'Restart squid'

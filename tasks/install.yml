@@ -1,0 +1,6 @@
+---
+- name: 'Install packages'
+  ansible.builtin.package:
+    name: "{{ squid_pkg }}"
+    state: 'present'
+    update_cache: true

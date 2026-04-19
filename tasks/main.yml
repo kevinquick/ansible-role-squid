@@ -1,87 +1,18 @@
 ---
 - name: 'Include OS specific vars'
   ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yml"
-  no_log: true
 
-- name: 'Install packages'
-  ansible.builtin.package:
-    name: "{{ squid_pkg }}"
-    state: 'present'
-    update_cache: true
+- name: 'Install squid'
+  ansible.builtin.import_tasks: 'install.yml'
 
-- name: 'Ensure firewall ports'
-  ansible.posix.firewalld:
-    port: "{{ squid_port }}/tcp"
-    permanent: true
-    immediate: true
-    state: 'enabled'
-  when: ansible_facts['os_family'] == 'RedHat'
-
-- name: 'Ensure that /etc/squid/conf.d folder exists'
-  ansible.builtin.file:
-    path: '/etc/squid/conf.d/'
-    owner: 'root'
-    group: 'root'
-    mode: 0755
-    state: 'directory'
-
-- name: 'Ensure allow- and blocklists'
-  ansible.builtin.copy:
-    dest: "/etc/squid/{{ item['name'] }}.acl"
-    content: |
-      # Managed by Ansible, your changes will be lost!
-      {% for line in item['content'] %}
-      {{ line }}
-      {% endfor %}
-    mode: 0444
-  notify: 'restart squid'
-  loop:
-    - name: 'allowlist'
-      content: "{{ squid_allowed_domains }}"
-    - name: 'blocklist'
-      content: "{{ squid_blocked_domains }}"
-    - name: 'allowed_hosts'
-      content: "{{ squid_allowed_hosts }}"
-    - name: 'blocked_hosts'
-      content: "{{ squid_blocked_hosts }}"
-
-- name: 'Ensure custom Squid configurations'
-  ansible.builtin.template:
-    src: 'template.conf.j2'
-    dest: "/etc/squid/conf.d/{{ item['name'] }}.conf"
-    owner: 'root'
-    group: 'root'
-    mode: 0644
-  notify: 'restart squid'
-  loop: "{{ squid_custom_config }}"
-  when: squid_custom_config is defined
-
-- name: 'Check if Squid sub-modules are present'
-  ansible.builtin.find:
-    paths: '/etc/squid/conf.d/'
-    patterns: '*.conf'
-  register: 'find_result'
-
-- name: 'Ensure there is at least 1 sub-module present'
-  ansible.builtin.file:
-    path: '/etc/squid/conf.d/default.conf'
-    owner: 'root'
-    group: 'root'
-    mode: 0644
-    state: 'touch'
-  when: find_result['matched'] == 0
-
-- name: 'Ensure Squid config'
-  ansible.builtin.template:
-    src: 'squid.conf.j2'
-    dest: '/etc/squid/squid.conf'
-    owner: 'root'
-    group: 'root'
-    mode: 0644
-  notify: 'restart squid'
+- name: 'Configure squid'
+  ansible.builtin.import_tasks: 'configure.yml'
 
 - name: 'Ensure service'
   ansible.builtin.service:
     name: 'squid'
     state: 'started'
     enabled: true
+
+- name: 'Flush handlers'
+  ansible.builtin.meta: 'flush_handlers'
