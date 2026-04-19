@@ -1,2 +1,3 @@
 ---
 squid_pkg: 'squid'
+squid_crypto_pkg: 'python3-cryptography'

@@ -4,3 +4,11 @@
     name: "{{ squid_pkg }}"
     state: 'present'
     update_cache: true
+
+- name: 'Install python-cryptography for HTTPS intercept cert generation'
+  ansible.builtin.package:
+    name: "{{ squid_crypto_pkg }}"
+    state: 'present'
+  when:
+    - squid_intercept_https_port is defined
+    - squid_intercept_autogenerate | bool
