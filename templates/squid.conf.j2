@@ -49,5 +49,9 @@ refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min
 cache_dir {{ squid_diskcache }}
 coredump_dir {{ squid_coredumpdir }}
 
+{% if squid_deny_response | default('') | length > 0 %}
+deny_info {{ squid_deny_response }} all
+{% endif %}
+
 # Deny anything not already allowed
 http_access deny all
