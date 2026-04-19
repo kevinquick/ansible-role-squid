@@ -54,6 +54,42 @@
   when: squid_find_result['matched'] == 0
   changed_when: false
 
+- name: 'Generate HTTPS intercept private key'
+  community.crypto.openssl_privatekey:
+    path: "{{ squid_intercept_key_path }}"
+    size: 2048
+    owner: 'root'
+    group: 'squid'
+    mode: '0640'
+  when:
+    - squid_intercept_https_port is defined
+    - squid_intercept_autogenerate | bool
+  notify: 'Restart squid'
+
+- name: 'Generate HTTPS intercept CSR'
+  community.crypto.openssl_csr:
+    path: "{{ squid_intercept_key_path | dirname }}/squid-intercept.csr"
+    privatekey_path: "{{ squid_intercept_key_path }}"
+    common_name: 'squid-intercept'
+  when:
+    - squid_intercept_https_port is defined
+    - squid_intercept_autogenerate | bool
+
+- name: 'Generate HTTPS intercept self-signed certificate'
+  community.crypto.x509_certificate:
+    path: "{{ squid_intercept_cert_path }}"
+    privatekey_path: "{{ squid_intercept_key_path }}"
+    csr_path: "{{ squid_intercept_key_path | dirname }}/squid-intercept.csr"
+    provider: 'selfsigned'
+    selfsigned_not_after: '+3650d'
+    owner: 'root'
+    group: 'squid'
+    mode: '0640'
+  when:
+    - squid_intercept_https_port is defined
+    - squid_intercept_autogenerate | bool
+  notify: 'Restart squid'
+
 - name: 'Ensure Squid config'
   ansible.builtin.template:
     src: 'squid.conf.j2'

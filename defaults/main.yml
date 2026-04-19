@@ -66,6 +66,19 @@ squid_coredumpdir: '/var/spool/squid'
 # Response for denied requests. Rendered as `deny_info <value> all`. Unset for Squid default.
 # squid_deny_response: 'TCP_RESET'
 
+# Transparent HTTPS intercept port. When set, adds a second listener in SNI-splice
+# mode (no decryption, no CA required). Unset to disable.
+# squid_intercept_https_port: 3129
+
+# Listener cert/key paths. Override to bring your own PKI; leave as default for
+# auto-generated self-signed material.
+squid_intercept_cert_path: '/etc/squid/squid-intercept.crt'
+squid_intercept_key_path: '/etc/squid/squid-intercept.key'
+
+# Auto-generate a self-signed cert/key pair at the paths above. Set to false to
+# manage the files yourself (they must already exist when the role runs).
+squid_intercept_autogenerate: true
+
 # For use with custom configurations only
 squid_custom_config: []
 

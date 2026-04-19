@@ -1,5 +1,8 @@
 # {{ ansible_managed }}
 http_port {{ squid_port }}
+{% if squid_intercept_https_port is defined %}
+https_port {{ squid_intercept_https_port }} intercept ssl-bump tls-cert={{ squid_intercept_cert_path }} tls-key={{ squid_intercept_key_path }} generate-host-certificates=off
+{% endif %}
 
 include /etc/squid/conf.d/*.conf
 
@@ -19,6 +22,12 @@ acl SSL_ports port {{ port }}
 acl Safe_ports port {{ port }}
 {% endfor %}
 acl CONNECT method CONNECT
+
+{% if squid_intercept_https_port is defined %}
+acl step1 at_step SslBump1
+ssl_bump peek step1
+ssl_bump splice all
+{% endif %}
 
 {% if squid_upstream_proxy %}
 cache_peer {{ squid_cache_peer_host }} parent {{ squid_cache_peer_port }} 0 no-query default
