@@ -1,17 +1,24 @@
+---
 galaxy_info:
   author: 'Kevin Quick'
+  namespace: 'kevinquick'
   description: 'Ansible role for installing squid proxy server.'
-  company: 'Codite'
+  role_name: 'squid'
 
   license: 'GPLv3'
 
   min_ansible_version: '2.10'
 
   platforms:
+    - name: 'Debian'
+      versions:
+        - 'bookworm'
+        - 'trixie'
     - name: 'EL'
       versions:
-        - 7
-        - 8
+        - '7'
+        - '8'
+        - '9'
 
   galaxy_tags:
     - 'squid'
