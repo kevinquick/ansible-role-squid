@@ -1,0 +1,30 @@
+---
+- name: 'Gather client facts'
+  hosts: 'squid_clients:squid_blocked_clients'
+  gather_facts: true
+  tasks:
+    - name: 'Expose client IP as a simple fact'
+      ansible.builtin.set_fact:
+        client_ip: "{{ (ansible_facts['all_ipv4_addresses'] | reject('eq', '127.0.0.1') | first) }}"
+
+- name: 'Converge squid server'
+  hosts: 'squid_servers'
+  vars:
+    squid_allowed_domains:
+      - '.example.com'
+    squid_blocked_domains:
+      - '.blocked.example'
+    squid_allowed_hosts:
+      - "{{ hostvars['squid-client']['client_ip'] }}/32"
+    squid_blocked_hosts:
+      - "{{ hostvars['squid-client-blocked']['client_ip'] }}/32"
+    squid_custom_config:
+      - name: 'example'
+        access_control:
+          - name: 'custom_example'
+            type: 'dstdomain'
+            arg: '.custom.example'
+  tasks:
+    - name: 'Run role'
+      ansible.builtin.import_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"

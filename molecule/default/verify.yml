@@ -1,0 +1,165 @@
+---
+- name: 'Gather client facts'
+  hosts: 'squid_clients:squid_blocked_clients'
+  gather_facts: true
+  tasks:
+    - name: 'Expose client IP as a simple fact'
+      ansible.builtin.set_fact:
+        client_ip: "{{ (ansible_facts['all_ipv4_addresses'] | reject('eq', '127.0.0.1') | first) }}"
+
+- name: 'Verify squid server'
+  hosts: 'squid_servers'
+  tasks:
+    - name: 'Check squid config files exist'
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: 'squid_files'
+      loop:
+        - '/etc/squid/squid.conf'
+        - '/etc/squid/allowlist.acl'
+        - '/etc/squid/blocklist.acl'
+        - '/etc/squid/allowed_hosts.acl'
+        - '/etc/squid/blocked_hosts.acl'
+        - '/etc/squid/conf.d/example.conf'
+
+    - name: 'Assert squid config files exist'
+      ansible.builtin.assert:
+        that:
+          - item['stat']['exists']
+        fail_msg: "Config file {{ item['item'] }} was not created"
+      loop: "{{ squid_files['results'] }}"
+      loop_control:
+        label: "{{ item['item'] }}"
+
+    - name: 'Check squid service is running'
+      ansible.builtin.systemd:
+        name: 'squid'
+      register: 'squid_service'
+
+    - name: 'Assert squid service is active'
+      ansible.builtin.assert:
+        that:
+          - squid_service['status']['ActiveState'] == 'active'
+        fail_msg: 'squid service is not active'
+
+    - name: 'Check squid port is listening'
+      ansible.builtin.wait_for:
+        port: "{{ squid_port | default(3128) }}"
+        host: '127.0.0.1'
+        timeout: 10
+
+    - name: 'Validate squid config syntax'
+      ansible.builtin.command: 'squid -k parse'
+      changed_when: false
+
+    - name: 'Read generated squid.conf'
+      ansible.builtin.slurp:
+        src: '/etc/squid/squid.conf'
+      register: 'squid_conf'
+
+    - name: 'Assert squid.conf contains expected directives'
+      ansible.builtin.assert:
+        that:
+          - "'http_port 3128' in conf"
+          - "'include /etc/squid/conf.d/*.conf' in conf"
+          - "'acl allowlist dstdomain \"/etc/squid/allowlist.acl\"' in conf"
+          - "'acl blocklist dstdomain \"/etc/squid/blocklist.acl\"' in conf"
+          - "'acl allowed_hosts src \"/etc/squid/allowed_hosts.acl\"' in conf"
+          - "'acl blocked_hosts src \"/etc/squid/blocked_hosts.acl\"' in conf"
+          - "'acl SSL_ports port 443' in conf"
+          - "'acl Safe_ports port 80' in conf"
+          - "'acl Safe_ports port 443' in conf"
+          - "'http_access deny all' in conf"
+      vars:
+        conf: "{{ squid_conf['content'] | b64decode }}"
+
+    - name: 'Read generated ACL files'
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      register: 'acl_files'
+      loop:
+        - '/etc/squid/allowlist.acl'
+        - '/etc/squid/blocklist.acl'
+        - '/etc/squid/allowed_hosts.acl'
+
+    - name: 'Assert ACL files contain expected entries'
+      ansible.builtin.assert:
+        that:
+          - "'.example.com' in (acl_files['results'][0]['content'] | b64decode)"
+          - "'.blocked.example' in (acl_files['results'][1]['content'] | b64decode)"
+          - "hostvars['squid-client']['client_ip'] in (acl_files['results'][2]['content'] | b64decode)"
+
+    - name: 'Read custom sub-module config'
+      ansible.builtin.slurp:
+        src: '/etc/squid/conf.d/example.conf'
+      register: 'example_conf'
+
+    - name: 'Assert custom sub-module contains expected directives'
+      ansible.builtin.assert:
+        that:
+          - "'acl custom_example dstdomain .custom.example' in conf"
+      vars:
+        conf: "{{ example_conf['content'] | b64decode }}"
+
+- name: 'Verify allowed squid client'
+  hosts: 'squid_clients'
+  tasks:
+    - name: 'Reach allowed domain through proxy'
+      ansible.builtin.command: >-
+        curl --show-error --output /dev/null
+        --write-out '%{http_code}'
+        --max-time 15
+        --proxy http://{{ item }}:3128
+        http://www.example.com/
+      register: 'curl_allowed'
+      changed_when: false
+      failed_when: curl_allowed['stdout'] not in ['200', '301', '302']
+      loop: "{{ groups['squid_servers'] }}"
+
+    - name: 'Report allowed-domain proxy results'
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://www.example.com/ => HTTP {{ item['stdout'] }}"
+      loop: "{{ curl_allowed['results'] }}"
+      loop_control:
+        label: "{{ item['item'] }}"
+
+    - name: 'Blocked domain is denied by proxy'
+      ansible.builtin.command: >-
+        curl --show-error --output /dev/null
+        --write-out '%{http_code}'
+        --max-time 15
+        --proxy http://{{ item }}:3128
+        http://foo.blocked.example/
+      register: 'curl_blocked'
+      changed_when: false
+      failed_when: curl_blocked['stdout'] != '403'
+      loop: "{{ groups['squid_servers'] }}"
+
+    - name: 'Report blocked-domain proxy results'
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://foo.blocked.example/ => HTTP {{ item['stdout'] }}"
+      loop: "{{ curl_blocked['results'] }}"
+      loop_control:
+        label: "{{ item['item'] }}"
+
+- name: 'Verify blocked squid client'
+  hosts: 'squid_blocked_clients'
+  tasks:
+    - name: 'Blocked client is denied by proxy'
+      ansible.builtin.command: >-
+        curl --show-error --output /dev/null
+        --write-out '%{http_code}'
+        --max-time 15
+        --proxy http://{{ item }}:3128
+        http://nonlisted.test.local/
+      register: 'curl_blocked_client'
+      changed_when: false
+      failed_when: curl_blocked_client['stdout'] != '403'
+      loop: "{{ groups['squid_servers'] }}"
+
+    - name: 'Report blocked-client proxy results'
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://nonlisted.test.local/ => HTTP {{ item['stdout'] }}"
+      loop: "{{ curl_blocked_client['results'] }}"
+      loop_control:
+        label: "{{ item['item'] }}"

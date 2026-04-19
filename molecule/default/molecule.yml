@@ -1,0 +1,63 @@
+---
+dependency:
+  name: 'galaxy'
+  options:
+    requirements-file: '${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml'
+driver:
+  name: 'podman'
+platforms:
+  - name: 'squid'
+    dockerfile: 'Containerfile'
+    image: 'quay.io/fedora/fedora:latest'
+    command: '/usr/sbin/init'
+    pre_build_image: false
+    systemd: 'always'
+    privileged: true
+    network: 'squid-test'
+    groups:
+      - 'squid_servers'
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+  - name: 'squid-debian'
+    dockerfile: 'Containerfile.debian'
+    image: 'docker.io/library/debian:bookworm'
+    command: '/lib/systemd/systemd'
+    pre_build_image: false
+    systemd: 'always'
+    privileged: true
+    network: 'squid-test'
+    groups:
+      - 'squid_servers'
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+  - name: 'squid-client'
+    dockerfile: 'Containerfile'
+    image: 'quay.io/fedora/fedora:latest'
+    command: '/usr/sbin/init'
+    pre_build_image: false
+    systemd: 'always'
+    privileged: true
+    network: 'squid-test'
+    groups:
+      - 'squid_clients'
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+  - name: 'squid-client-blocked'
+    dockerfile: 'Containerfile'
+    image: 'quay.io/fedora/fedora:latest'
+    command: '/usr/sbin/init'
+    pre_build_image: false
+    systemd: 'always'
+    privileged: true
+    network: 'squid-test'
+    groups:
+      - 'squid_blocked_clients'
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+provisioner:
+  name: 'ansible'
+  config_options:
+    defaults:
+      roles_path: '$MOLECULE_PROJECT_DIRECTORY/..'
+verifier:
+  name: 'ansible'
