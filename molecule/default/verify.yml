@@ -105,40 +105,37 @@
   hosts: 'squid_clients'
   tasks:
     - name: 'Reach allowed domain through proxy'
-      ansible.builtin.command: >-
-        curl --show-error --output /dev/null
-        --write-out '%{http_code}'
-        --max-time 15
-        --proxy http://{{ item }}:3128
-        http://www.example.com/
-      register: 'curl_allowed'
-      changed_when: false
-      failed_when: curl_allowed['stdout'] not in ['200', '301', '302']
+      ansible.builtin.uri:
+        url: 'http://www.example.com/'
+        status_code: [200, 301, 302]
+        follow_redirects: 'none'
+        timeout: 15
+      environment:
+        http_proxy: "http://{{ item }}:3128"
+      register: 'proxy_allowed'
       loop: "{{ groups['squid_servers'] }}"
 
     - name: 'Report allowed-domain proxy results'
       ansible.builtin.debug:
-        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://www.example.com/ => HTTP {{ item['stdout'] }}"
-      loop: "{{ curl_allowed['results'] }}"
+        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://www.example.com/ => HTTP {{ item['status'] }}"
+      loop: "{{ proxy_allowed['results'] }}"
       loop_control:
         label: "{{ item['item'] }}"
 
     - name: 'Blocked domain is denied by proxy'
-      ansible.builtin.command: >-
-        curl --show-error --output /dev/null
-        --write-out '%{http_code}'
-        --max-time 15
-        --proxy http://{{ item }}:3128
-        http://foo.blocked.example/
-      register: 'curl_blocked'
-      changed_when: false
-      failed_when: curl_blocked['stdout'] != '403'
+      ansible.builtin.uri:
+        url: 'http://foo.blocked.example/'
+        status_code: 403
+        timeout: 15
+      environment:
+        http_proxy: "http://{{ item }}:3128"
+      register: 'proxy_blocked'
       loop: "{{ groups['squid_servers'] }}"
 
     - name: 'Report blocked-domain proxy results'
       ansible.builtin.debug:
-        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://foo.blocked.example/ => HTTP {{ item['stdout'] }}"
-      loop: "{{ curl_blocked['results'] }}"
+        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://foo.blocked.example/ => HTTP {{ item['status'] }}"
+      loop: "{{ proxy_blocked['results'] }}"
       loop_control:
         label: "{{ item['item'] }}"
 
@@ -146,20 +143,18 @@
   hosts: 'squid_blocked_clients'
   tasks:
     - name: 'Blocked client is denied by proxy'
-      ansible.builtin.command: >-
-        curl --show-error --output /dev/null
-        --write-out '%{http_code}'
-        --max-time 15
-        --proxy http://{{ item }}:3128
-        http://nonlisted.test.local/
-      register: 'curl_blocked_client'
-      changed_when: false
-      failed_when: curl_blocked_client['stdout'] != '403'
+      ansible.builtin.uri:
+        url: 'http://nonlisted.test.local/'
+        status_code: 403
+        timeout: 15
+      environment:
+        http_proxy: "http://{{ item }}:3128"
+      register: 'proxy_blocked_client'
       loop: "{{ groups['squid_servers'] }}"
 
     - name: 'Report blocked-client proxy results'
       ansible.builtin.debug:
-        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://nonlisted.test.local/ => HTTP {{ item['stdout'] }}"
-      loop: "{{ curl_blocked_client['results'] }}"
+        msg: "{{ inventory_hostname }} -> {{ item['item'] }}:3128 GET http://nonlisted.test.local/ => HTTP {{ item['status'] }}"
+      loop: "{{ proxy_blocked_client['results'] }}"
       loop_control:
         label: "{{ item['item'] }}"
