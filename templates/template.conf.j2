@@ -34,3 +34,9 @@ http_access {{ http_access.perm }} {{ http_access.aclname }}
 refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min }} {{ rp.percent }} {{ rp.max }} {{ rp.opts }}
 {% endfor %}
 {% endif %}
+
+{% if item.raw is defined %}
+{% for directive in item.raw %}
+{{ directive }}
+{% endfor %}
+{% endif %}
