@@ -63,6 +63,15 @@ squid_refresh_patterns:
 squid_diskcache: 'ufs /var/spool/squid 100 16 256'
 squid_coredumpdir: '/var/spool/squid'
 
+# Timeout + buffer tuning. Unset = Squid default.
+# squid_read_timeout: '15 minutes'
+# squid_request_timeout: '5 minutes'
+# squid_forward_timeout: '4 minutes'
+# squid_pconn_timeout: '1 minute'
+# squid_client_request_buffer_max_size: '512 KB'
+# squid_tcp_recv_bufsize: 0
+# squid_half_closed_clients: false
+
 # Response for denied requests. Rendered as `deny_info <value> all`. Unset for Squid default.
 # squid_deny_response: 'TCP_RESET'
 

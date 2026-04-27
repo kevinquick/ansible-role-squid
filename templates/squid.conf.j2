@@ -58,6 +58,28 @@ refresh_pattern {% if rp.case_sensitive %}-i {% endif %}{{ rp.regex }} {{ rp.min
 cache_dir {{ squid_diskcache }}
 coredump_dir {{ squid_coredumpdir }}
 
+{% if squid_read_timeout is defined %}
+read_timeout {{ squid_read_timeout }}
+{% endif %}
+{% if squid_request_timeout is defined %}
+request_timeout {{ squid_request_timeout }}
+{% endif %}
+{% if squid_forward_timeout is defined %}
+forward_timeout {{ squid_forward_timeout }}
+{% endif %}
+{% if squid_pconn_timeout is defined %}
+pconn_timeout {{ squid_pconn_timeout }}
+{% endif %}
+{% if squid_client_request_buffer_max_size is defined %}
+client_request_buffer_max_size {{ squid_client_request_buffer_max_size }}
+{% endif %}
+{% if squid_tcp_recv_bufsize is defined %}
+tcp_recv_bufsize {{ squid_tcp_recv_bufsize }}
+{% endif %}
+{% if squid_half_closed_clients is defined %}
+half_closed_clients {{ squid_half_closed_clients | ternary('on', 'off') }}
+{% endif %}
+
 {% if squid_deny_response | default('') | length > 0 %}
 deny_info {{ squid_deny_response }} all
 {% endif %}
